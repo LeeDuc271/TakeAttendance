@@ -69,11 +69,12 @@ Hệ thống được thiết kế với tiêu chí bảo mật cấp doanh nghi
 ### Các Bước Khởi Chạy Hệ Thống
 
 **Bước 0: Chuẩn bị mô hình AI (Bắt buộc)**
-Do giới hạn dung lượng lưu trữ của GitHub, các mô hình AI phục vụ nhận diện khuôn mặt không được đính kèm sẵn. Bạn cần tải chúng thủ công trước khi khởi chạy hệ thống:
+Do giới hạn dung lượng lưu trữ của GitHub, các mô hình AI lớn phục vụ nhận diện khuôn mặt không được đính kèm sẵn. Bạn cần tải chúng thủ công trước khi khởi chạy hệ thống:
 1. Tải mô hình InsightFace ArcFace (`buffalo_l.zip`):
    - Tải trực tiếp từ [kho lưu trữ của InsightFace](https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_l.zip).
 2. Giải nén file `.zip` vừa tải về.
 3. Chép toàn bộ các file (có đuôi `.onnx`) bên trong vào đường dẫn sau trong dự án của bạn: `ai_worker/models/models/buffalo_l/`. *(Tạo các thư mục này nếu chưa có).*
+*(Lưu ý: Mô hình YOLOv8-face (`yolov8n-face.pt`) dung lượng nhỏ (6MB) đã được tôi cấu hình tự động lưu sẵn trong thư mục `ai_worker`, bạn KHÔNG cần phải tải thêm).*
 
 **Bước 1: Chạy hệ thống bằng Docker**
 Mở thư mục gốc của dự án (`d:\AI\TakeAttendance`) bằng Terminal (PowerShell hoặc Command Prompt) và chạy lệnh:
