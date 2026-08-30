@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: attendance_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-adminpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-attendance_system}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - attendance_net
+    restart: unless-stopped
+
+  ai_worker:
+    build:
+      context: ./ai_worker
+      dockerfile: Dockerfile
+    container_name: attendance_ai_worker
+    environment:
+      - YOLO_MODEL_PATH=yolov8n-face.pt
+    volumes:
+      - ./ai_worker:/app
+    networks:
+      - attendance_net
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: attendance_backend
+    environment:
+      - PORT=${PORT:-3000}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-admin}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-adminpassword}
+      - DB_NAME=${POSTGRES_DB:-attendance_system}
+      - JWT_SECRET=${JWT_SECRET:-supersecretkey_for_attendance_app}
+      - AI_SERVICE_URL=${AI_SERVICE_URL:-http://ai_worker:8000}
+      - MATCH_THRESHOLD=${MATCH_THRESHOLD:-0.5}
+    depends_on:
+      - db
+      - ai_worker
+    networks:
+      - attendance_net
+    restart: unless-stopped
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+
+  nginx:
+    image: nginx:alpine
+    container_name: attendance_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    networks:
+      - attendance_net
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
+networks:
+  attendance_net:
+    driver: bridge

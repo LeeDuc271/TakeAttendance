@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống điểm danh SIC</title>
+    <!-- Google Fonts: Space Grotesk, JetBrains Mono, Inter loaded via CSS -->
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css?v=15">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="glass-panel login-panel">
+            <div class="brand" style="justify-content: center; border-bottom: none; padding: 0; margin-bottom: 0.5rem;">
+                <div class="logo">
+                    <i class="fa-solid fa-camera-retro"></i>
+                </div>
+                <h2>Hệ thống điểm danh SIC</h2>
+            </div>
+            <p class="login-subtitle">Đăng nhập hệ thống</p>
+            
+            <form id="loginForm" class="login-form">
+                <div class="input-group">
+                    <i class="fa-solid fa-terminal"></i>
+                    <input type="text" id="username" placeholder="Tài khoản" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" placeholder="Mật khẩu" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="loginBtn">Đăng nhập</button>
+            </form>
+            <div id="loginError" class="login-error hidden"></div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="app-container" style="display: none;">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo"><i class="fa-solid fa-crosshairs"></i></div>
+                <h2 style="font-size: 1.1rem; line-height: 1.2;">Hệ thống điểm danh SIC</h2>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" id="navAttendance">
+                    <i class="fa-solid fa-video"></i> <span>Điểm danh</span>
+                </a>
+                <a href="#" class="nav-item" id="navClasses">
+                    <i class="fa-solid fa-users"></i> <span>Lớp học</span>
+                </a>
+                <a href="#" class="nav-item" id="navStats">
+                    <i class="fa-solid fa-chart-line"></i> <span>Thống kê</span>
+                </a>
+                <a href="#" class="nav-item" id="navTeachers">
+                    <i class="fa-solid fa-chalkboard-user"></i> <span>Giáo viên</span>
+                </a>
+            </nav>
+            <div class="user-profile">
+                <div class="avatar"><i class="fa-solid fa-user-astronaut"></i></div>
+                <div class="info">
+                    <span class="name" id="profileName">Admin</span>
+                    <span class="role" id="profileRole">QUẢN TRỊ VIÊN</span>
+                </div>
+                <button id="logoutBtn" class="btn" style="padding: 0.5rem; margin-left: auto; border:none;" title="Đăng xuất">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Attendance View (Scan) -->
+        <main id="attendanceView" class="main-content">
+            <header class="top-header">
+                <div class="page-title">
+                    <h1 id="attendanceHeaderTitle">Chọn lớp học</h1>
+                    <p id="attendanceHeaderSub">Chọn lớp học để bắt đầu điểm danh.</p>
+                </div>
+                <button id="backToGridBtn" class="btn btn-secondary hidden">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại
+                </button>
+            </header>
+
+            <div class="content-body">
+                <!-- Class Grid View -->
+                <div id="attendanceGrid" class="class-grid">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Sessions View -->
+                <div id="sessionsView" class="hidden">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                        <h2 style="font-family: var(--font-display); font-size: 1.2rem;" id="sessionsViewTitle">Phiên điểm danh</h2>
+                        <button id="newSessionBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> THÊM BUỔI HỌC</button>
+                    </div>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Số thứ tự</th>
+                                <th>Thời gian</th>
+                                <th>Trạng thái</th>
+                                <th>Hiện diện / Tổng</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionsTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Scan Interface View -->
+                <div id="scanInterface" class="scan-container hidden">
+                    <div class="scan-area">
+                        <div class="action-bar" style="display:flex; gap:1rem;">
+                            <button id="webcamBtn" class="btn btn-primary">
+                                <i class="fa-solid fa-video"></i> BẬT CAMERA
+                            </button>
+                            <button id="switchCameraBtn" class="btn btn-secondary hidden">
+                                <i class="fa-solid fa-camera-rotate"></i> ĐỔI CAMERA
+                            </button>
+                            <input type="file" id="fileInput" multiple accept="image/jpeg, image/png, image/webp" hidden>
+                            <button id="uploadBtn" class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+                                <i class="fa-solid fa-upload"></i> TẢI ẢNH LÊN
+                            </button>
+                            <button id="scanFilesBtn" class="btn btn-primary hidden">
+                                <i class="fa-solid fa-microchip"></i> XỬ LÝ ẢNH
+                            </button>
+                            <button id="saveAttendanceBtn" class="btn btn-primary hidden" style="background:var(--success); border-color:var(--success);">
+                                <i class="fa-solid fa-floppy-disk"></i> LƯU ĐIỂM DANH
+                            </button>
+                        </div>
+                        
+                        <div class="camera-box" id="cameraBox">
+                            <div class="empty-state" id="emptyState">
+                                <i class="fa-solid fa-camera" style="font-size:2rem; margin-bottom:1rem;"></i>
+                                Đang chờ camera...
+                            </div>
+                            <!-- Video and Canvas -->
+                            <video id="webcamVideo" autoplay muted playsinline webkit-playsinline class="hidden" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;"></video>
+                            <canvas id="webcamOverlay" class="hidden" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
+                            <div id="previewContainer" class="hidden" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items:center; justify-content:center;"></div>
+                            
+                            <!-- Floating Camera Controls -->
+                            <div id="cameraFloatingControls" class="hidden" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 2rem; z-index: 10000;">
+                                <button id="floatingSwitchBtn" class="floating-cam-btn btn-switch-cam" title="Đổi Camera">
+                                    <i class="fa-solid fa-camera-rotate"></i>
+                                </button>
+                                <button id="floatingCloseBtn" class="floating-cam-btn btn-close-cam" title="Thoát Camera">
+                                    <i class="fa-solid fa-phone-slash"></i>
+                                </button>
+                            </div>
+
+                            <!-- Scanner Overlay -->
+                            <div class="scanner-overlay" id="scannerOverlay">
+                                <div class="crosshair tl"></div>
+                                <div class="crosshair tr"></div>
+                                <div class="crosshair bl"></div>
+                                <div class="crosshair br"></div>
+                                <div class="scanner-line"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Panel -->
+                    <div class="results-panel">
+                        <div class="results-header">
+                            <h3 style="font-family: var(--font-display); font-size:1.1rem; text-transform:uppercase;">Kết quả trực tiếp</h3>
+                            <span class="stats-badge"><span id="detectedCount">0</span> PHÁT HIỆN</span>
+                        </div>
+                        
+                        <div class="tabs" style="display:flex; border-bottom:var(--border);">
+                            <button class="btn" style="flex:1; border:none; border-bottom: 2px solid var(--accent); border-radius:0;" data-target="present-tab" id="tabPresent">CÓ MẶT (<span id="presentCount">0</span>)</button>
+                            <button class="btn" style="flex:1; border:none; border-bottom: 2px solid transparent; border-radius:0;" data-target="absent-tab" id="tabAbsent">VẮNG MẶT (<span id="absentCount">0</span>)</button>
+                        </div>
+
+                        <div id="present-tab" class="student-list">
+                            <!-- Populated dynamically -->
+                            <div style="padding:2rem; text-align:center; color:var(--text-muted); font-family:var(--font-data);">KHÔNG CÓ DỮ LIỆU</div>
+                        </div>
+                        <div id="absent-tab" class="student-list hidden">
+                            <div style="padding:2rem; text-align:center; color:var(--text-muted); font-family:var(--font-data);">KHÔNG CÓ DỮ LIỆU</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Classes/Data View (CRUD) -->
+        <main id="classesView" class="main-content" style="display: none;">
+            <header class="top-header">
+                <div class="page-title">
+                    <h1>Quản lý Dữ liệu</h1>
+                    <p>Quản lý danh sách lớp học và sinh viên.</p>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <div class="tabs" style="display:flex; border-bottom:var(--border); margin-bottom:1.5rem;">
+                    <button class="btn" style="border:none; border-bottom: 2px solid var(--accent); border-radius:0;" id="tabAdminClasses">LỚP HỌC</button>
+                    <button class="btn" style="border:none; border-bottom: 2px solid transparent; border-radius:0;" id="tabAdminStudents">SINH VIÊN</button>
+                </div>
+
+                <div id="adminClassesSection">
+                    <div style="display:flex; gap:1rem; margin-bottom: 1rem;">
+                        <button id="showAddClassBtn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> THÊM LỚP MỚI</button>
+                        <button id="showBatchUploadBtn" class="btn btn-secondary"><i class="fa-solid fa-file-csv"></i> NHẬP TỪ FILE (ZIP)</button>
+                    </div>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Tên Lớp</th>
+                                <th>Giáo Viên</th>
+                                <th>Thời gian tạo</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminClassesTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="adminStudentsSection" style="display: none;">
+                    <div style="margin-bottom: 1rem;">
+                        <button id="showAddStudentBtn" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> THÊM SINH VIÊN</button>
+                    </div>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Mã SV</th>
+                                <th>Họ Tên</th>
+                                <th>Tên Lớp</th>
+                                <th>Đi học / Tổng</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminStudentsTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- Teachers View -->
+        <main id="teachersView" class="main-content" style="display: none;">
+            <header class="top-header">
+                <div class="page-title">
+                    <h1>Quản lý Giáo viên</h1>
+                    <p>Quản lý tài khoản giảng viên.</p>
+                </div>
+            </header>
+            <div class="content-body">
+                <div id="adminTeachersSection">
+                    <div style="margin-bottom: 1rem;">
+                        <button id="showAddTeacherBtn" class="btn btn-primary"><i class="fa-solid fa-user-tie"></i> THÊM GIÁO VIÊN</button>
+                    </div>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Tên Đăng Nhập</th>
+                                <th>Vai trò</th>
+                                <th>Thời gian tạo</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTeachersTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- Statistics View -->
+        <main id="statsView" class="main-content" style="display: none;">
+            <header class="top-header">
+                <div class="page-title">
+                    <h1>Thống kê Hệ thống</h1>
+                    <p>Bấm vào một thẻ bên dưới để xem dữ liệu chi tiết.</p>
+                </div>
+            </header>
+            <div class="content-body">
+                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="stat-card" id="statCardStudents" style="background: var(--bg-surface); border: var(--border); padding: 2rem; text-align: center;">
+                        <div style="font-size: 2.5rem; color: var(--accent); margin-bottom: 0.5rem;"><i class="fa-solid fa-user-graduate"></i></div>
+                        <h3 style="font-family: var(--font-data); font-size: 2rem;" id="statTotalStudents">0</h3>
+                        <p style="color: var(--text-muted); text-transform: uppercase; font-size: 0.85rem;">Tổng Sinh Viên</p>
+                    </div>
+                    <div class="stat-card" id="statCardClasses" style="background: var(--bg-surface); border: var(--border); padding: 2rem; text-align: center;">
+                        <div style="font-size: 2.5rem; color: var(--accent); margin-bottom: 0.5rem;"><i class="fa-solid fa-users-rectangle"></i></div>
+                        <h3 style="font-family: var(--font-data); font-size: 2rem;" id="statTotalClasses">0</h3>
+                        <p style="color: var(--text-muted); text-transform: uppercase; font-size: 0.85rem;">Tổng Lớp Học</p>
+                    </div>
+                    <div class="stat-card" id="statCardTeachers" style="background: var(--bg-surface); border: var(--border); padding: 2rem; text-align: center;">
+                        <div style="font-size: 2.5rem; color: var(--accent); margin-bottom: 0.5rem;"><i class="fa-solid fa-chalkboard-user"></i></div>
+                        <h3 style="font-family: var(--font-data); font-size: 2rem;" id="statTotalTeachers">0</h3>
+                        <p style="color: var(--text-muted); text-transform: uppercase; font-size: 0.85rem;">Tổng Giáo Viên</p>
+                    </div>
+                    <div class="stat-card" id="statCardSessions" style="background: var(--bg-surface); border: var(--border); padding: 2rem; text-align: center;">
+                        <div style="font-size: 2.5rem; color: var(--accent); margin-bottom: 0.5rem;"><i class="fa-solid fa-layer-group"></i></div>
+                        <h3 style="font-family: var(--font-data); font-size: 2rem;" id="statTotalSessions">0</h3>
+                        <p style="color: var(--text-muted); text-transform: uppercase; font-size: 0.85rem;">Tổng Buổi Học</p>
+                    </div>
+                </div>
+
+                <div id="statsDetailContainer">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                        <div style="background: var(--bg-surface); padding: 1.5rem; border-radius: var(--radius); border: var(--border);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h3 style="color: var(--text-main); font-family: var(--font-display); margin: 0;">Tỷ lệ đi học theo thời gian</h3>
+                                <select id="chartClassSelect" class="input-field" style="width: auto; padding: 0.25rem 0.5rem; border: var(--border); border-radius: 4px; font-family: var(--font-data);">
+                                    <option value="">Chọn lớp học</option>
+                                </select>
+                            </div>
+                            <canvas id="classAttendanceChart"></canvas>
+                        </div>
+                        <div style="background: var(--bg-surface); padding: 1.5rem; border-radius: var(--radius); border: var(--border); display: flex; flex-direction: column; align-items: center;">
+                            <h3 id="overallChartTitle" style="margin-bottom: 1rem; color: var(--text-main); font-family: var(--font-display); text-align: center;">Tỷ lệ toàn hệ thống</h3>
+                            <div style="width: 100%; max-width: 300px;">
+                                <canvas id="overallAttendanceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin-bottom: 1rem; color: var(--text-main); font-family: var(--font-display); border-bottom: var(--border); padding-bottom: 0.5rem;">Danh sách Lớp học (Chi tiết)</h3>
+                    <table class="admin-table" id="statsClassesTable">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Tên Lớp</th>
+                                <th>Giáo Viên</th>
+                                <th>Tổng Sinh Viên</th>
+                                <th>Số buổi đã dạy</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statsClassesTableBody"></tbody>
+                    </table>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <!-- Add Teacher Modal -->
+    <div id="addTeacherModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Thêm Giáo Viên Mới</h3>
+            <form id="addTeacherForm">
+                <div class="input-group" style="margin-bottom: 1.5rem;">
+                    <input type="text" id="newTeacherUsername" placeholder="TÊN ĐĂNG NHẬP" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 2rem;">
+                    <input type="password" id="newTeacherPassword" placeholder="MẬT KHẨU" required>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('addTeacherModal').classList.add('hidden')">HỦY BỎ</button>
+                    <button type="submit" class="btn btn-primary">THỰC HIỆN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Teacher Modal -->
+    <div id="editTeacherModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Chỉnh sửa Giáo viên</h3>
+            <form id="editTeacherForm">
+                <input type="hidden" id="editTeacherId">
+                <div class="input-group" style="margin-bottom: 1.5rem;">
+                    <input type="text" id="editTeacherUsername" placeholder="TÊN ĐĂNG NHẬP" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 2rem;">
+                    <input type="password" id="editTeacherPassword" placeholder="MẬT KHẨU MỚI (KHÔNG BẮT BUỘC)">
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editTeacherModal').classList.add('hidden')">HỦY BỎ</button>
+                    <button type="submit" class="btn btn-primary">CẬP NHẬT</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Class Modal -->
+    <div id="addClassModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Thêm Lớp Mới</h3>
+            <form id="addClassForm">
+                <div class="input-group" style="margin-bottom: 1.5rem;">
+                    <input type="text" id="newClassName" placeholder="TÊN LỚP" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 2rem;">
+                    <input type="text" id="newClassTeacherId" placeholder="TÊN GIÁO VIÊN" required>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('addClassModal').classList.add('hidden')">HỦY BỎ</button>
+                    <button type="submit" class="btn btn-primary">THỰC HIỆN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Class Modal -->
+    <div id="editClassModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Chỉnh sửa Lớp</h3>
+            <form id="editClassForm">
+                <input type="hidden" id="editClassId">
+                <div class="input-group" style="margin-bottom: 1.5rem;">
+                    <input type="text" id="editClassName" placeholder="TÊN LỚP" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 2rem;">
+                    <input type="text" id="editClassTeacherId" placeholder="TÊN GIÁO VIÊN" required>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editClassModal').classList.add('hidden')">HỦY BỎ</button>
+                    <button type="submit" class="btn btn-primary">CẬP NHẬT</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Batch Results Modal -->
+    <div id="batchResultsModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+            <h3 id="batchResultsTitle">Kết quả Nạp Dữ Liệu</h3>
+            <p id="batchResultsSummary" style="font-family: var(--font-data); margin-bottom: 1rem; color: var(--accent);"></p>
+            <div id="batchResultsErrors" class="hidden">
+                <h4 style="color: var(--danger); margin-bottom: 0.5rem;">Lỗi:</h4>
+                <ul id="batchResultsErrorList" style="list-style: none; padding: 0; font-family: var(--font-data); font-size: 0.85rem; color: var(--danger); background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 4px; max-height: 200px; overflow-y: auto;">
+                </ul>
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+                <button class="btn btn-primary" onclick="document.getElementById('batchResultsModal').classList.add('hidden'); loadAdminData();">ĐÓNG</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div id="addStudentModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Thêm Sinh Viên Mới</h3>
+            <form id="addStudentForm">
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <input type="text" id="newStudentCode" placeholder="MÃ SV" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <input type="text" id="newStudentName" placeholder="HỌ TÊN" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <input type="number" id="newStudentClassId" placeholder="MÃ LỚP" required>
+                </div>
+                <div style="margin-bottom: 2rem;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; display: block; font-family:var(--font-data);">ẢNH KHUÔN MẶT</label>
+                    <input type="file" id="newStudentImage" accept="image/jpeg, image/png, image/webp" required style="width:100%; color: var(--text-main); font-family:var(--font-data);">
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('addStudentModal').classList.add('hidden')">HỦY BỎ</button>
+                    <button type="submit" class="btn btn-primary">THỰC HIỆN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Student Modal -->
+    <div id="editStudentModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Chỉnh sửa Sinh Viên</h3>
+            <form id="editStudentForm">
+                <input type="hidden" id="editStudentId">
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <input type="text" id="editStudentCode" placeholder="MÃ SV" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <input type="text" id="editStudentName" placeholder="HỌ TÊN" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 2rem;">
+                    <input type="number" id="editStudentClassId" placeholder="MÃ LỚP" required readonly>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editStudentModal').classList.add('hidden')">HỦY BỎ</button>
+                    <button type="submit" class="btn btn-primary">CẬP NHẬT</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Batch Upload Class Modal -->
+    <div id="batchUploadModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Nhập hàng loạt</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; font-family:var(--font-body);">Cung cấp cấu trúc thư mục dạng `Lớp/MãSV_Tên/image.jpg` để tự động nạp.</p>
+            <form id="batchUploadForm">
+                <div style="margin-bottom: 2rem;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; display: block; font-family:var(--font-data);">THƯ MỤC NGUỒN</label>
+                    <input type="file" id="batchUploadDir" webkitdirectory directory multiple required style="width:100%; color: var(--text-main); font-family:var(--font-data);">
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('batchUploadModal').classList.add('hidden')">HỦY BỎ</button>
+                    <button type="submit" class="btn btn-primary" id="batchUploadSubmitBtn">NẠP</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="api.js?v=17"></script>
+    <script src="app.js?v=26"></script>
+</body>
+</html>
